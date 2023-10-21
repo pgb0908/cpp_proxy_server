@@ -83,12 +83,6 @@ int main(int argc, char* argv[]) {
 
     try
     {
-/*        if (argc != 2)
-        {
-            std::cerr << "Usage: async_tcp_echo_server <port>\n";
-            return 1;
-        }*/
-
         asio::io_context io_context;
 
         server s(io_context, 9000);
