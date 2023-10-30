@@ -9,6 +9,7 @@
 #include <memory>
 #include <asio.hpp>
 #include <map>
+#include <http_parser.h>
 
 template<typename SocketType>
 class basic_http_connection : public std::enable_shared_from_this<basic_http_connection<SocketType> > {

@@ -3,7 +3,8 @@
 //
 
 #include "http_server_connection.h"
-
+#include <memory>
+#include <boost/bind.hpp>
 
 
 template <typename SocketType>
@@ -30,17 +31,32 @@ basic_http_connection<SocketType>::basic_http_connection(asio::io_service& io_se
 template <typename SocketType>
 basic_http_connection<SocketType>::~basic_http_connection()
 {
-    HTTP_SERVER_DEBUG_OUTPUT("~basic_http_connection\n");
+    //HTTP_SERVER_DEBUG_OUTPUT("~basic_http_connection\n");
 }
 
 template <typename SocketType>
 void basic_http_connection<SocketType>::start()
 {
-    socket_.async_read_some(buffer_.prepare(8),
-                            bind(&basic_http_connection<SocketType>::handler,
+/*    socket_.async_read_some(buffer_.prepare(8),
+                            boost::bind(&basic_http_connection<SocketType>::handler,
                                  this->shared_from_this(),
                                  asio::placeholders::error,
                                  asio::placeholders::bytes_transferred));
+
+    socket_.async_read_some(buffer_.prepare(8),
+                            bind(&basic_http_connection<SocketType>::handler,
+                                 this->shared_from_this()));*/
+
+    auto self = this->shared_from_this();
+    socket_.async_read_some(buffer_.prepare(8),
+                            [this, self](asio::error_code ec, std::size_t length)
+                            {
+                                if (!ec)
+                                {
+                                    bind(&basic_http_connection<SocketType>::handler,
+                                         this->shared_from_this());
+                                }
+                            });
 }
 
 template <typename SocketType>
@@ -74,6 +90,8 @@ int basic_http_connection<SocketType>::on_header_field(http_parser * parser, con
     conn->header_state_ = HEADER_FIELD;
     return 0;
 }
+
+
 template <typename SocketType>
 int basic_http_connection<SocketType>::on_header_value(http_parser * parser, const char * at, size_t length)
 {
@@ -90,6 +108,8 @@ int basic_http_connection<SocketType>::on_header_value(http_parser * parser, con
     conn->header_state_ = HEADER_VALUE;
     return 0;
 }
+
+
 template <typename SocketType>
 int basic_http_connection<SocketType>::on_headers_complete(http_parser * parser)
 {
@@ -100,6 +120,8 @@ int basic_http_connection<SocketType>::on_headers_complete(http_parser * parser)
     }
     return 0;
 }
+
+
 template <typename SocketType>
 int basic_http_connection<SocketType>::on_body(http_parser * parser, const char * at, size_t length)
 {
@@ -134,7 +156,7 @@ void basic_http_connection<SocketType>::handler(const std::error_code& error, st
         std::size_t nsize = http_parser_execute(&parser_, &settings_, data, bytes_transferred);
         if (nsize != bytes_transferred)
         {
-            HTTP_SERVER_DEBUG_OUTPUT("http parser execute fail %lu/%lu\n", nsize, bytes_transferred);
+            //HTTP_SERVER_DEBUG_OUTPUT("http parser execute fail %lu/%lu\n", nsize, bytes_transferred);
             socket_.close();
             return;
         }
@@ -153,12 +175,12 @@ void basic_http_connection<SocketType>::handle_write(const std::error_code& erro
 {
     if (error)
     {
-        HTTP_SERVER_DEBUG_OUTPUT("Unable to handle request: %s [Errno %d]\n",
+/*        HTTP_SERVER_DEBUG_OUTPUT("Unable to handle request: %s [Errno %d]\n",
                                  error.message().c_str(),
-                                 error.value());
+                                 error.value());*/
         return;
     }
-    HTTP_SERVER_DEBUG_OUTPUT("Response sent with %lu bytes\n", bytes_transferred);
+    //HTTP_SERVER_DEBUG_OUTPUT("Response sent with %lu bytes\n", bytes_transferred);
 }
 
 template <typename SocketType>
@@ -171,7 +193,7 @@ void basic_http_connection<SocketType>::send_response(int status_code, std::stri
 			break;
     switch (status_code)
     {
-        HTTP_STATUS_CODE_MAP(HTTP_STATUS_CODE)
+        //HTTP_STATUS_CODE_MAP(HTTP_STATUS_CODE)
         default:
             status_text = "UNKNOWN";
             break;

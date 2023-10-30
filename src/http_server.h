@@ -10,6 +10,7 @@
 #include <memory>
 #include <utility>
 #include <asio.hpp>
+#include "http_server_connection.h"
 
 
 template<typename RequestHandler>
@@ -18,7 +19,7 @@ public:
     using  connection_type = basic_http_connection<RequestHandler>;
 
     http_server(asio::io_service &io_svc,
-                asio::ip::tcp::endpoint endpoint_,
+                const asio::ip::tcp::endpoint& endpoint_,
                 RequestHandler request_handler = RequestHandler());
 
     /**
