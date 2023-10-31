@@ -1,7 +1,7 @@
 
 add_subdirectory(network)
 
-add_executable(http_server
+add_library(http_server
         HttpServer.cpp
         )
 

@@ -17,16 +17,19 @@ class Session : public std::enable_shared_from_this<Session>
 public:
     // our sesseion holds the socket
     Session(tcp::socket socket)
-            : m_socket(std::move(socket)) { }
+            : socket_(std::move(socket)) { }
 
     // and run was already called in our server, where we just wait for requests
     void run() {
         waitForRequest();
     }
 private:
+    void read();
+    void write(std::size_t length);
+
     void waitForRequest();
 private:
-    tcp::socket m_socket;
+    tcp::socket socket_;
     asio::streambuf m_buffer;
 };
 
