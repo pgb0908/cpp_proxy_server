@@ -21,16 +21,17 @@ public:
 
     // and run was already called in our server, where we just wait for requests
     void run() {
-        waitForRequest();
+        read();
     }
 private:
     void read();
     void write(std::size_t length);
 
-    void waitForRequest();
 private:
     tcp::socket socket_;
     asio::streambuf m_buffer;
+    enum { max_length = 1024 };
+    char data_[max_length];
 };
 
 #endif //MYPROXY_SESSION_H
