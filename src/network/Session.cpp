@@ -13,6 +13,7 @@ void Session::read() {
                             {
                                 if (!ec)
                                 {
+                                    //https://github.com/nodejs/http-parser/blob/37a0ff8/test.c#L403
                                     auto buffer = asio::buffer(data_, max_length);
 
                                     /* Start up / continue the parser.
@@ -22,6 +23,7 @@ void Session::read() {
                                                                        &settings,
                                                                        asio::buffer_cast<const char*>(buffer),
                                                                        asio::buffer_size(buffer));
+
 
                                     if (parser->upgrade) {
                                         /* handle new protocol */
