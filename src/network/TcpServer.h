@@ -6,6 +6,7 @@
 #define MYPROXY_TCPSERVER_H
 
 #include "asio.hpp"
+#include "http_parser.h"
 
 using namespace asio::ip;
 
@@ -19,6 +20,11 @@ private:
     void accept();
 
     tcp::acceptor acceptor_;
+
+
+
+
+
 };
 
 

@@ -8,6 +8,5 @@ add_library(http_server
 
 target_link_libraries(http_server
         network_server
-        http_parser::http_parser
         JsonCpp::JsonCpp
         )
