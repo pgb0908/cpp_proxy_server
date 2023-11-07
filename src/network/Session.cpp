@@ -8,34 +8,38 @@
 
 void Session::read() {
     auto self(shared_from_this());
-    socket_.async_read_some(asio::buffer(data_, max_length),
-                            [this, self](asio::error_code ec, std::size_t length)
-                            {
-                                if (!ec)
-                                {
-                                    //https://github.com/nodejs/http-parser/blob/37a0ff8/test.c#L403
-                                    auto buffer = asio::buffer(data_, max_length);
 
-                                    /* Start up / continue the parser.
-                                     * Note we pass recved==0 to signal that EOF has been received.
-                                     */
-                                    auto nparsed = http_parser_execute(parser.get(),
-                                                                       &settings,
-                                                                       asio::buffer_cast<const char*>(buffer),
-                                                                       asio::buffer_size(buffer));
+    asio::async_read_until(socket_, m_buffer, "\r\n\r\n",
+                           [this, self](asio::error_code ec, std::size_t /*length*/)
+                           {
+                               // if there was no error, everything went well and for this demo
+                               // we print the data to stdout and wait for the next request
+                               if (!ec)  {
+                                   std::string data{
+                                           std::istreambuf_iterator<char>(&m_buffer),
+                                           std::istreambuf_iterator<char>()
+                                   };
+
+                                   auto nparsed = http_parser_execute(parser.get(),
+                                                                      &settings,
+                                                                      data.data(),
+                                                                      data.size());
 
 
-                                    if (parser->upgrade) {
-                                        /* handle new protocol */
-                                    }
-                                    else if (nparsed != asio::buffer_size(buffer)) {
-                                        /* Handle error. Usually just close the connection. */
-                                        std::cout << "can not parsed!!! error" << std::endl;
-                                    }
+                                   if (parser->upgrade) {
+                                       /* handle new protocol */
+                                   }
 
-                                    //write(length);
-                                }
-                            });
+                                   // we just print the data, you can here call other api's
+                                   // or whatever the server needs to do with the received data
+                                   std::cout << data << std::endl << std::endl;
+                                   //wait_for_request();
+                               } else {
+                                   std::cout << "error: " << ec << std::endl;;
+                               }
+                           });
+
+
 }
 
 void Session::write(std::size_t length) {
