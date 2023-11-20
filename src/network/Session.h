@@ -44,10 +44,10 @@ private:
     std::unique_ptr<http_parser> parser_;
 
     struct my_http_data {
-        char method[64];
+        char method[64]{};
         //char header_fields[MAX_HEADERS][1024];
         std::stack<std::pair<std::string, std::string>> header_fields;
-        int current_header_index;
+        int current_header_index{};
     };
 
     my_http_data http_data_;

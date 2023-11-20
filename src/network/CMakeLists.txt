@@ -6,5 +6,6 @@ add_library(network_server
 
 target_link_libraries(network_server
         asio::asio
-        http_parser::http_parser
+        proxy_lib
+        myproxy_http_parser
         )
