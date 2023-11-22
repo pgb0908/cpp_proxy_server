@@ -8,16 +8,15 @@
 
 #pragma once
 
-#include <proxygen/lib/http/HTTP3ErrorCode.h>
 #include <proxygen/lib/http/HTTPMessage.h>
 #include <proxygen/lib/http/codec/ErrorCode.h>
-#include <proxygen/lib/utils/Exception.h>
+#include "util/Exception.h"
 
 #include <string>
 
 namespace myproxy {
 
-HTTP3::ErrorCode toHTTP3ErrorCode(proxygen::ErrorCode err);
+HTTP3::ErrorCode toHTTP3ErrorCode(ErrorCode err);
 
 /**
  * This class encapsulates the various errors that can occur on an

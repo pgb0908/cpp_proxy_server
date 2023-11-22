@@ -7,7 +7,7 @@
  */
 
 #define PROXYGEN_HTTPHEADERS_IMPL
-#include <proxygen/lib/http/HTTPHeaders.h>
+#include "HTTPHeaders.h"
 
 #include <glog/logging.h>
 
@@ -40,7 +40,7 @@ HTTPHeaders::HTTPHeaders() : deletedCount_(0) {
   resize(kInitialVectorReserve);
 }
 
-void HTTPHeaders::add(folly::StringPiece name, folly::StringPiece value) {
+void HTTPHeaders::add(std::string name, std::string value) {
   CHECK(name.size());
   const HTTPHeaderCode code = HTTPCommonHeaders::hash(name.data(), name.size());
   emplace_back(code,
@@ -53,9 +53,9 @@ void HTTPHeaders::add(folly::StringPiece name, folly::StringPiece value) {
 void HTTPHeaders::add(HTTPHeaders::headers_initializer_list l) {
   for (auto& p : l) {
     if (p.first.type_ == HTTPHeaderName::CODE) {
-      add(p.first.code_, folly::StringPiece(p.second.data(), p.second.size()));
+      add(p.first.code_, std::string(p.second.data(), p.second.size()));
     } else {
-      add(p.first.name_, folly::StringPiece(p.second.data(), p.second.size()));
+      add(p.first.name_, std::string(p.second.data(), p.second.size()));
     }
   }
 }
@@ -73,7 +73,7 @@ void HTTPHeaders::addFromCodec(const char* str, size_t len, string&& value) {
   emplace_back(code, namePtr, std::move(value));
 }
 
-bool HTTPHeaders::exists(folly::StringPiece name) const {
+bool HTTPHeaders::exists(std::string name) const {
   const HTTPHeaderCode code = HTTPCommonHeaders::hash(name.data(), name.size());
   if (code != HTTP_HEADER_OTHER) {
     return exists(code);
@@ -96,16 +96,16 @@ size_t HTTPHeaders::getNumberOfValues(HTTPHeaderCode code) const {
   return count;
 }
 
-size_t HTTPHeaders::getNumberOfValues(folly::StringPiece name) const {
+size_t HTTPHeaders::getNumberOfValues(std::string name) const {
   size_t count = 0;
-  forEachValueOfHeader(name, [&](folly::StringPiece /*value*/) -> bool {
+  forEachValueOfHeader(name, [&](std::string /*value*/) -> bool {
     ++count;
     return false;
   });
   return count;
 }
 
-bool HTTPHeaders::remove(folly::StringPiece name) {
+bool HTTPHeaders::remove(std::string name) {
   const HTTPHeaderCode code = HTTPCommonHeaders::hash(name.data(), name.size());
   if (code != HTTP_HEADER_OTHER) {
     return remove(code);
@@ -132,7 +132,7 @@ bool HTTPHeaders::remove(HTTPHeaderCode code) {
 }
 
 bool HTTPHeaders::removeAllVersions(HTTPHeaderCode code,
-                                    folly::StringPiece name) {
+                                    std::string name) {
   bool removed = false;
   if (code != HTTP_HEADER_OTHER) {
     removed = remove(code);
@@ -228,7 +228,7 @@ size_t HTTPHeaders::size() const {
   return length_ - deletedCount_;
 }
 
-bool HTTPHeaders::transferHeaderIfPresent(folly::StringPiece name,
+bool HTTPHeaders::transferHeaderIfPresent(std::string name,
                                           HTTPHeaders& strippedHeaders) {
   bool transferred = false;
   const HTTPHeaderCode code = HTTPCommonHeaders::hash(name.data(), name.size());

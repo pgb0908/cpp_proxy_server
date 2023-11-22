@@ -7,4 +7,6 @@ add_library(proxy_lib
 target_include_directories(
         proxy_lib
         ./http/HTTPException.h
+        boost::boost
+        openssl::openssl
 )

@@ -9,7 +9,7 @@
 #include <sstream>
 #include <string>
 
-#include <HTTPException.h>
+#include "HTTPException.h"
 
 namespace myproxy {
 

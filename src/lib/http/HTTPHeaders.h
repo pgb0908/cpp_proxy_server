@@ -9,12 +9,14 @@
 #pragma once
 
 #include "../util/UtilInl.h"
-#include <proxygen/lib/http/HTTPCommonHeaders.h>
+#include "HTTPCommonHeaders.h"
 
 #include <bitset>
 #include <cstring>
 #include <initializer_list>
 #include <string>
+#include <memory>
+#include <cassert>
 
 namespace myproxy {
 
@@ -66,7 +68,7 @@ class HTTPHeaders {
   struct HTTPHeaderName {
     enum Type { CODE, STRING };
     union {
-      folly::StringPiece name_;
+      std::string name_;
       HTTPHeaderCode code_;
     };
     Type type_;
@@ -76,13 +78,13 @@ class HTTPHeaders {
     /* implicit */ HTTPHeaderName(const char* name)
         : name_(name), type_(STRING) {
     }
-    /* implicit */ HTTPHeaderName(folly::StringPiece name)
+    /* implicit */ HTTPHeaderName(std::string name)
         : name_(name), type_(STRING) {
     }
   };
 
   using headers_initializer_list =
-      std::initializer_list<std::pair<HTTPHeaderName, folly::StringPiece>>;
+      std::initializer_list<std::pair<HTTPHeaderName, std::string>>;
 
   /*
    * separator used to concatenate multiple values of the same header
@@ -90,31 +92,31 @@ class HTTPHeaders {
    */
   static const std::string COMBINE_SEPARATOR;
 
-  FB_EXPORT HTTPHeaders();
-  FB_EXPORT ~HTTPHeaders();
-  FB_EXPORT HTTPHeaders(const HTTPHeaders&);
-  FB_EXPORT HTTPHeaders& operator=(const HTTPHeaders&);
-  FB_EXPORT HTTPHeaders(HTTPHeaders&&) noexcept;
-  FB_EXPORT HTTPHeaders& operator=(HTTPHeaders&&);
+   HTTPHeaders();
+   ~HTTPHeaders();
+   HTTPHeaders(const HTTPHeaders&);
+   HTTPHeaders& operator=(const HTTPHeaders&);
+   HTTPHeaders(HTTPHeaders&&) noexcept;
+   HTTPHeaders& operator=(HTTPHeaders&&);
 
   /**
    * Add the header 'name' with value 'value'; if other instances of this
    * header name exist, they will be retained.
    */
-  void add(folly::StringPiece name, folly::StringPiece value);
-  void add(folly::StringPiece name, char const* value) {
-    add(name, folly::StringPiece(value));
+  void add(std::string name, std::string value);
+  void add(std::string name, char const* value) {
+    add(name, std::string(value));
   }
-  void add(folly::StringPiece name, char* value) {
-    add(name, folly::StringPiece(value));
+  void add(std::string name, char* value) {
+    add(name, std::string(value));
   }
   template <typename T> // T = string
-  void add(folly::StringPiece name, T&& value);
+  void add(std::string name, T&& value);
   void add(HTTPHeaderCode code, char const* value) {
-    add(code, folly::StringPiece(value));
+    add(code, std::string(value));
   }
   void add(HTTPHeaderCode code, char* value) {
-    add(code, folly::StringPiece(value));
+    add(code, std::string(value));
   }
   template <typename T> // T = string
   void add(HTTPHeaderCode code, T&& value);
@@ -127,7 +129,7 @@ class HTTPHeaders {
    * For the header 'name', set its value to the single header 'value',
    * removing any other instances of this header.
    */
-  void set(folly::StringPiece name, const std::string& value) {
+  void set(std::string name, const std::string& value) {
     // this could be somewhat optimized but probably not an issue yet
     remove(name);
     add(name, value);
@@ -145,7 +147,7 @@ class HTTPHeaders {
    * argument it will remove x-y_z, x_y-z and x_y_z too and then set the given
    * header name, value.
    */
-  void setOneVersion(folly::StringPiece name,
+  void setOneVersion(std::string name,
                      HTTPHeaderCode code,
                      const std::string& value) {
     removeAllVersions(code, name);
@@ -155,7 +157,7 @@ class HTTPHeaders {
   /**
    * Do we have an instance of the given header?
    */
-  bool exists(folly::StringPiece name) const;
+  bool exists(std::string name) const;
   bool exists(HTTPHeaderCode code) const;
   bool rawExists(std::string& name) const {
     return exists(name);
@@ -227,7 +229,7 @@ class HTTPHeaders {
    * Get the number of values corresponding to a given header name.
    */
   size_t getNumberOfValues(HTTPHeaderCode code) const;
-  size_t getNumberOfValues(folly::StringPiece name) const;
+  size_t getNumberOfValues(std::string name) const;
 
   /**
    * Process the ordered list of values for the given header name:
@@ -242,7 +244,7 @@ class HTTPHeaders {
    * true), and false otherwise.
    */
   template <typename LAMBDA> // const string & -> bool
-  inline bool forEachValueOfHeader(folly::StringPiece name, LAMBDA func) const;
+  inline bool forEachValueOfHeader(std::string name, LAMBDA func) const;
   template <typename LAMBDA> // const string & -> bool
   inline bool forEachValueOfHeader(HTTPHeaderCode code, LAMBDA func) const;
 
@@ -250,7 +252,7 @@ class HTTPHeaders {
    * Remove all instances of the given header, returning true if anything was
    * removed and false if this header didn't exist in our set.
    */
-  bool remove(folly::StringPiece name);
+  bool remove(std::string name);
   bool remove(HTTPHeaderCode code);
   void rawRemove(const std::string& name) {
     remove(name);
@@ -260,7 +262,7 @@ class HTTPHeaders {
    * Remove all possible versions of header eg. if x-y-z is the
    * argument it will remove x-y_z, x_y-z and x_y_z too.
    */
-  bool removeAllVersions(HTTPHeaderCode code, folly::StringPiece name);
+  bool removeAllVersions(HTTPHeaderCode code, std::string name);
 
   /**
    * Remove all headers.
@@ -342,7 +344,7 @@ class HTTPHeaders {
    * group.  No-op if the header doesn't exist.  Returns true if header(s) were
    * moved.
    */
-  bool transferHeaderIfPresent(folly::StringPiece name, HTTPHeaders& dest);
+  bool transferHeaderIfPresent(std::string name, HTTPHeaders& dest);
 
   // deletes the strings in headerNames_ that we own
   void disposeOfHeaderNames();
@@ -354,7 +356,7 @@ class HTTPHeaders {
       return;
     }
 
-    double targetCapacity = folly::to_floating_point(capacity_);
+    double targetCapacity = static_cast<float>(capacity_);
     while (targetCapacity < static_cast<double>(minCapacity)) {
       if (targetCapacity == 0) {
         targetCapacity = kInitialVectorReserve;
@@ -413,14 +415,14 @@ class HTTPHeaders {
     codes()[length_] = code;
     names()[length_] = name;
     std::string* p = values() + length_++;
-    new (p) std::string(folly::trimWhitespace(std::forward<T>(value)));
+    new (p) std::string(trim(std::forward<T>(value)));
   }
 };
 
 // Implementation follows - it has to be in the .h because of the templates
 
 template <typename T> // T = string
-void HTTPHeaders::add(folly::StringPiece name, T&& value) {
+void HTTPHeaders::add(std::string name, T&& value) {
   assert(name.size());
   const HTTPHeaderCode code = HTTPCommonHeaders::hash(name.data(), name.size());
   auto namePtr =
@@ -491,7 +493,7 @@ void HTTPHeaders::forEachWithCode(LAMBDA func) const {
 }
 
 template <typename LAMBDA> // const string & -> bool
-bool HTTPHeaders::forEachValueOfHeader(folly::StringPiece name,
+bool HTTPHeaders::forEachValueOfHeader(std::string name,
                                        LAMBDA func) const {
   const HTTPHeaderCode code = HTTPCommonHeaders::hash(name.data(), name.size());
   if (code != HTTP_HEADER_OTHER) {

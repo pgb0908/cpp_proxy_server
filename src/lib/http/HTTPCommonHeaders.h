@@ -13,7 +13,7 @@
 #include <string>
 
 
-namespace proxygen {
+namespace myproxy {
 
 /**
  * Codes (hashes)

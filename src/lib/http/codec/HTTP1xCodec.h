@@ -210,7 +210,7 @@ class HTTP1xCodec : public HTTPCodec {
   std::unique_ptr<HTTPMessage> upgradeRequest_;
   std::unique_ptr<HTTPHeaders> trailers_;
   std::string currentHeaderName_;
-  folly::StringPiece currentHeaderNameStringPiece_;
+  std::string currentHeaderNameStringPiece_;
   std::string currentHeaderValue_;
   std::string url_;
   std::string userAgent_;

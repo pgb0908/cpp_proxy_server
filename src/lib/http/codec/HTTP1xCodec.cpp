@@ -19,7 +19,7 @@
 
 using folly::IOBuf;
 using folly::IOBufQueue;
-using folly::StringPiece;
+using std::string;
 using std::string;
 using std::unique_ptr;
 
@@ -336,10 +336,10 @@ void HTTP1xCodec::addDateHeader(IOBufQueue& writeBuf, size_t& len) {
   appendLiteral(writeBuf, len, CRLF);
 }
 
-constexpr folly::StringPiece kUpgradeToken = "websocket";
-constexpr folly::StringPiece kUpgradeConnectionToken = "Upgrade";
+constexpr std::string kUpgradeToken = "websocket";
+constexpr std::string kUpgradeConnectionToken = "Upgrade";
 // websocket/http1.1 draft.
-constexpr folly::StringPiece kWSMagicString =
+constexpr std::string kWSMagicString =
     "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
 std::string HTTP1xCodec::generateWebsocketKey() const {
@@ -351,7 +351,7 @@ std::string HTTP1xCodec::generateWebsocketKey() const {
 std::string HTTP1xCodec::generateWebsocketAccept(const std::string& key) const {
   folly::ssl::OpenSSLHash::Digest digest;
   digest.hash_init(EVP_sha1());
-  digest.hash_update(folly::StringPiece(key));
+  digest.hash_update(std::string(key));
   digest.hash_update(kWSMagicString);
   std::array<unsigned char, 20> arr;
   folly::MutableByteRange accept(arr.data(), arr.size());
@@ -528,7 +528,7 @@ void HTTP1xCodec::generateHeader(
     parser_.http_minor = 9;
     return;
   }
-  folly::StringPiece deferredContentLength;
+  std::string deferredContentLength;
   bool hasTransferEncodingChunked = false;
   bool hasDateHeader = false;
   bool hasUpgradeHeader = false;
@@ -537,8 +537,8 @@ void HTTP1xCodec::generateHeader(
   bool egressWebsocketUpgrade = msg.isEgressWebsocketUpgrade();
   bool hasUpgradeTokeninConnection = false;
   auto headerEncoder = [&](HTTPHeaderCode code,
-                           folly::StringPiece header,
-                           folly::StringPiece value) {
+                           std::string header,
+                           std::string value) {
     if (code == HTTP_HEADER_CONTENT_LENGTH) {
       // Write the Content-Length last (t1071703)
       deferredContentLength = value;
@@ -897,12 +897,12 @@ bool HTTP1xCodec::pushHeaderNameAndValue(HTTPHeaders& hdrs) {
   // Header names are strictly validated by http_parser, however, it allows
   // quoted+escaped CTLs so run our stricter check here.
   if (strictValidation_) {
-    folly::StringPiece headerName(currentHeaderName_.empty()
+    std::string headerName(currentHeaderName_.empty()
                                       ? currentHeaderNameStringPiece_
                                       : currentHeaderName_);
     bool compatValidate = false;
     if (!CodecUtil::validateHeaderValue(
-            folly::StringPiece(currentHeaderValue_),
+            std::string(currentHeaderValue_),
             compatValidate ? CodecUtil::CtlEscapeMode::STRICT_COMPAT
                            : CodecUtil::CtlEscapeMode::STRICT)) {
       LOG(ERROR) << "Invalid header name=" << headerName;
@@ -1006,9 +1006,9 @@ int HTTP1xCodec::onHeadersComplete(size_t len) {
   if (hdrs.getNumberOfValues(HTTP_HEADER_CONTENT_LENGTH) > 1) {
     // Only reject the message if the Content-Length headers have different
     // values
-    folly::Optional<folly::StringPiece> contentLen;
+    folly::Optional<std::string> contentLen;
     bool error = hdrs.forEachValueOfHeader(
-        HTTP_HEADER_CONTENT_LENGTH, [&](folly::StringPiece value) -> bool {
+        HTTP_HEADER_CONTENT_LENGTH, [&](std::string value) -> bool {
           if (!contentLen.has_value()) {
             contentLen = value;
             return false;

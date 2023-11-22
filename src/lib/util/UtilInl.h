@@ -9,7 +9,7 @@
 #pragma once
 
 #include "string"
-
+#include <algorithm>
 
 #ifdef STRICT
 #undef STRICT
@@ -95,6 +95,13 @@ inline size_t findLastOf(std::string sp, char c) {
   return pos;
 }
 
+
+inline std::string trim(const std::string& str) {
+    auto start = std::find_if_not(str.begin(), str.end(), [](int c) { return std::isspace(c); });
+    auto end = std::find_if_not(str.rbegin(), str.rend(), [](int c) { return std::isspace(c); }).base();
+
+    return (start < end ? std::string(start, end) : std::string());
+}
 
 
 } // namespace proxygen

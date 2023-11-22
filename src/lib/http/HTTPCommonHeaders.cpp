@@ -36,7 +36,7 @@
 #include <glog/logging.h>
 #include <cctype>
 
-namespace proxygen {
+namespace myproxy {
 
 struct HTTPCommonHeaderName { const char* name; HTTPHeaderCode code; };
 
